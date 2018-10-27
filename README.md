@@ -16,6 +16,8 @@ GAE(Google App Engine)에 배포.
 
 Demo : http://ohthing-220617.appspot.com/
 
+Idea PPT : http://naver.me/5K96h4e0
+
 #사용법
 
 닉네임과 RoomId를 입력한다.
