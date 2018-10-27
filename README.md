@@ -4,13 +4,16 @@ Oh!Thing (마인드맵과 채팅을 이용한 실시간 협업 서비스)
 
 2014.09.10 제작
 사용 기술 :
+
 Front-end - HTML, CSS, JAVASCRIPT, JQUERY, AJAX
+
 back-end - flask(Python)
+
 실시간 소켓 통신 - Pusher
 
 GAE(Google App Engine)에 배포.
 
-데모 사이트 : http://ohthing-220617.appspot.com/
+Demo : http://ohthing-220617.appspot.com/
 
 사용법
 닉네임과 RoomId를 입력한다.
