@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<meta charset="UTF-8">
+	<title>Test</title>
+	<link rel="stylesheet" type="text/css" href="static/css/style.css" >
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<script src="http://code.jquery.com/ui/1.11.1/jquery-ui.js"></script> 
+	<script src="http://js.pusher.com/2.2/pusher.min.js"></script>
+
+	<script type="text/javascript">
+	var $messages = $('.chat_msg')
+	var input_room_id
+	var input_nickname
+	var $exe
+	var choice = ""
+	var target_obj = ""
+	var mouseX = 0;
+	var mouseY = 0;
+	var maxlen = 0;
+	var channel
+	var pusher
+	$(document).ready(function() {
+		pusher = new Pusher('24f8ac78c491f58a1e92');
+		channel = pusher.subscribe('devsim');
+
+		channel.bind('move', function(data){
+			if(data.room_id == input_room_id)
+			{
+			var id = document.getElementById(data.id); //전달받은 ID를 자신의 document에서 찾음.
+			id.style.left = (data.x) + "px";
+			id.style.top = (data.y) + "px";
+		}
+
+			//id 변수를 ㅣ이용하여 left, top을 조정. 모든 클라이언트들에게 같은 결과를 뿌려줌.
+		})
+
+		channel.bind('add', function(data){
+			if(data.room_id == input_room_id)
+			{
+			var $newid = $(data.id) //전달받은 ID로 객체를 생성.
+			$("#main").append($newid) //body 태그에다가 append 함.
+			
+			//새로 만들어지는 객체의 css 설정
+			$newid.css('height','70px')
+			$newid.css('width','120px')
+			$newid.css('border','3px solid black')
+
+			$newid.css('display','block')
+			$newid.css('border-radius','6px')
+			$newid.css('position','absolute')
+			$newid.css('top','140px')
+		}
+
+	})
+
+		channel.bind('del', function(data){
+			if(data.room_id == input_room_id)
+			{
+				var del_obj=document.getElementById(data.del_id);
+				del_obj.parentNode.removeChild(del_obj); 
+			}
+
+
+		})
+
+		channel.bind('child', function(data){
+			if(data.room_id == input_room_id)
+			{
+			var $newid = $(data.obj_fullname) //전달받은 ID로 객체를 생성.
+			var target_parent = "#" + data.target_parent
+			$(target_parent).append($newid) //body 태그에다가 append 함.
+			$newid.css('height','70px')
+			$newid.css('width','120px')
+			$newid.css('border','3px solid black')
+
+			$newid.css('display','block')
+			$newid.css('border-radius','6px')
+			$newid.css('position','absolute')
+
+
+			var id = document.getElementById(data.child_id); //전달받은 ID를 자신의 document에서 찾음.
+			id.style.left = (data.child_x) + "px";
+			id.style.top = (data.child_y) + "px";
+		}
+
+			//id 변수를 ㅣ이용하여 left, top을 조정. 모든 클라이언트들에게 같은 결과를 뿌려줌.
+		})
+
+		channel.bind('send_msg', function(data){
+
+			if(data.room_id == input_room_id)
+			{
+				var $user_nick = $('<span class = "username"></span>');
+				var objDiv1 = document.getElementById("chat_msg");
+
+				$user_nick.text(data.nickname);
+
+				var $messageBody = $('<span class = "massageBody"></span>');
+				$messageBody.text(" : " + data.msg_data);
+				$('#chat_msg').append($user_nick)
+				.append($messageBody)
+				.append($("<br>"))
+
+
+				objDiv1.scrollTop = objDiv1.scrollHeight;
+
+
+
+
+
+			}
+
+
+		})
+
+		channel.bind('text', function(data){
+			if(data.room_id == input_room_id)
+			{
+
+			var box = document.getElementById(data.choice)
+
+
+			
+			$(data.choice_target + ' .inner_txt').remove();
+
+
+
+			var $newtxt = $('<class ="inner_txt">' + data.txt_msg + '</class>') //전달받은 ID로 객체를 생성
+			$(data.choice_target).append($newtxt)
+			box.style.height = data.i_height
+			box.style.width = data.i_width
+			$('.textarea').remove()
+			
+			}
+
+
+		})
+
+
+
+
+		// bind
+
+	$(document).on("mouseenter", "obj", function() { //동적 객체의 이벤트를 위한 바인딩.
+		$('obj').draggable({
+
+			start: function(event, ui) {
+					// xpos = ui.position.left;
+					// ypos = ui.position.top;
+				},
+				stop: function(event, ui) {
+
+					var xmove = ui.position.left; // 좌표 구하기
+					var ymove = ui.position.top;
+					var id = $(this).attr('id'); //선택된 obj태그의 id를 알아냄
+
+				// alert(xmove + " " + ymove)
+
+				$.get("/move", {
+					x : xmove, //X좌표
+					y : ymove, //Y좌표
+					id : id, //ID
+					room_id : input_room_id
+
+
+				}, function(data) {});
+
+
+			}
+		})
+	})
+
+	$(document).on("click","obj", function() {
+
+		var parent_choice = "#" + this.parentNode.id
+
+		if (choice != ""){
+			var pre_choice = "#" + choice 
+			$(pre_choice).css('border','3px solid black')
+
+			choice = $(this).attr('id')
+			$(this).css('border','3px solid red')
+
+			return false;
+				// $(parent_choice).removeAttr('id')
+			}
+
+			else
+			{
+				// .removeAttr
+				choice = $(this).attr('id')
+
+				$(this).css('border','3px solid red')
+				
+				return false;
+				
+			}
+
+
+
+
+		})
+
+
+});
+
+//End document
+
+
+
+function add(){ //생성 버튼
+	
+	
+	var new_id = ('<obj id="' +obj_id() + '"></obj>'); //랜덤 생성한 ID로 
+
+
+	$.get("/add", {
+		id : new_id,
+		room_id : input_room_id
+		//ajax로 ID 전달
+
+
+
+	}, function(data) {});
+
+
+}
+
+function del(){
+
+	$.get("/del", {
+
+	del_id : choice, //ID
+	room_id : input_room_id
+
+}, function(data) {});
+
+
+}
+function cancel(){
+	var pre_choice = "#" + choice 
+	$(pre_choice).css('border','3px solid black')
+	choice = ""
+	target_obj = ""
+
+}
+
+
+function add_child(){
+	var ok = 1
+	// alert("Child를 생성할 좌표를 지정해주세요!")
+	target_obj = obj_id()
+	choice2 = ('<obj id="' + target_obj + '"></obj>');
+      	var $newid = $(choice2) //전달받은 ID로 객체를 생성.
+      	var parent = "#" + choice
+
+
+      	$('#main').click(function (event){
+      		if(ok == 1)
+      		{
+      			var offset = $(parent).offset();
+      			var relativeX = (event.pageX - offset.left);
+      			var relativeY = (event.pageY - offset.top);
+
+      			$.get("/add_child", {
+
+      				obj_fullname : choice2,
+      				target_parent : choice,
+      				child_id : target_obj,
+      				
+
+      				child_x : relativeX,
+      				child_y : relativeY,
+
+      				room_id : input_room_id
+
+      			}, function(data) {});
+
+
+
+			// var id = document.getElementById(target_obj); //전달받은 ID를 자신의 document에서 찾음.
+			// var id2 = document.getElementById(choice); //parent
+
+
+				//새로 만들어지는 객체의 css 설정
+
+
+
+				// a = x - id2.style.left
+				// b = y - id2.style.left
+				// alert(a + " " +b)
+				// alert("X: " + relativeX + "  Y: " + relativeY);
+
+				// id.style.left = relativeX + "px"
+				// id.style.top = relativeY + "px"
+
+				ok = 0
+			}
+		})
+
+
+      }
+
+var obj_id = function() { //10자리 임의의 ID 부여
+	var text = "";
+	var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+	for (var i = 0; i < 10; i++)
+		text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+	return text;
+}
+
+function setLine( txa ){
+ 	// total_len = txa.value.length
+              // line =  txa.value.split( "\n" ).length + 1;
+              // if( new_line < line ) new_line = line;
+
+              // new_line = txa.value.split( "\n" ).length + 1;
+              // if( new_line < line ) new_line = line;
+              // txa.cols = line + 1;
+              
+
+
+          }
+
+          function text(){
+
+
+          	var shap_choice = "#" + choice
+ 	var $newid = $('<textarea class= "textarea" name="textarea" onkeyup="iclick( this )"></textarea>') //전달받은 ID로 객체를 생성.
+			$(shap_choice).append($newid) //body 태그에다가 append 함.
+
+			
+		}
+		function change(){
+
+			var i = $("textarea").val();
+			var choice_target = "#" + choice
+
+			var i_height = $exe.style.height
+			var i_width = $exe.style.width
+			$.get("/text", {
+				choice : choice,
+				txt_msg : i,
+				choice_target : choice_target,
+				room_id : input_room_id,
+				i_height : i_height,
+				i_width : i_width
+
+			}, function(data) {});
+
+
+		}
+
+		function iclick(e){
+
+			e.cols = e.cols + 1;
+
+
+			$exe = e
+			e.style.height = "0px"
+
+
+			e.style.height = (e.scrollHeight) + "px";
+
+
+
+		}
+
+		function go_map(){
+			input_nickname = $('.nickname').val();
+			input_room_id = $('.room_id').val();
+
+
+			$.get("/join", {
+
+				room_id : input_room_id,
+
+
+			}, function(data) {
+				if (data.room_available == "0")
+				{
+					alert("회의가 이미 진행 중 입니다.")
+				}
+				else{
+
+					$('.front').hide();
+					$('.oh_thing').show();
+
+
+				}
+			});
+
+
+		}
+
+		function chat_toggle(){
+			$(".form_chat").slideToggle();
+
+		}
+
+		function send_msg(){
+
+			var nickname = input_nickname
+			var msg = $(".send_msg").val();
+
+			
+			$.get("/send_msg", {
+				nickname : nickname,
+				msg_data : msg,
+				room_id : input_room_id
+
+			}, function(data) {});
+			$('.send_msg').val('');
+
+			
+		}
+		
+
+
+		</script>
+	</head>
+	<body>
+		<div class = "front">
+			<div class = "main_logo"></div>
+			<img src="/static/img/main_logo.png" width="100%" height="500">
+		</div>
+
+		
+		<input type="text" class="nickname" placeholder="Nick Name">
+		<input type="text" class="room_id" placeholder="Room Id">
+
+
+		<div class = "join_img" onclick = "go_map()"></div>
+
+
+
+
+
+
+
+
+		<div class = "oh_thing">
+			<div class = "ribbon">
+				<img class = "ribbon-icon" src="/static/img/logo.png">
+			</div>
+
+			<div class = "menu">
+
+			</div>
+
+			<div class = "menu_button">
+				<img class = "add" onclick = "add()" style = "width : 100px; height : 50px; padding-left : 10px;" src="/static/img/object.png"> 
+				<img class = "del" onclick = "del()" style = "width : 100px; height : 50px; padding-left : 10px;" src="/static/img/del.png"> 
+				<img class = "cancel" onclick = "cancel()" style = "width : 100px; height : 50px; padding-left : 10px;" src="/static/img/nono.png"> 
+				<img class = "add_child" onclick = "add_child()" style = "width : 100px; height : 50px; padding-left : 10px;" src="/static/img/add.png"> 
+				<img class = "text" onclick = "text()" style = "width : 100px; height : 50px; padding-left : 10px;" src="/static/img/text.png"> 
+				<img class = "change" onclick = "change()" style = "width : 100px; height : 50px; padding-left : 10px;" src="/static/img/apply.png"> 
+				<img class = "start" onclick = "start()" style = "width : 100px; height : 50px; padding-left : 10px;" src="/static/img/start.png"> 
+				
+			</div>
+
+
+			<div id = "main"></div>
+			<div class = "chat_menu" onclick = "chat_toggle()"></div>
+			<div class = "form_chat">
+				<div id = "chat_list">
+
+				</div>
+
+				<div id ="chat_msg">
+				</div>
+
+
+				<input type="text"  name="send_box" onkeypress = "if(event.keyCode=='13')send_msg()" class="send_msg"/>
+				
+				
+
+			</div>
+
+		</div>
+
+	</body>
+	</html>
+
